@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>49数字自动计算器 v3（保留表达式，显示计算结果）</title>
+<style>
+  :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans",Helvetica,Arial;}
+  body{background:#f8fafc;margin:0;padding:18px;color:#0f172a}
+  h1{font-size:18px;text-align:center;margin:6px 0 12px;}
+  .top{max-width:980px;margin:0 auto 12px;display:flex;gap:8px;align-items:center;justify-content:center;}
+  .top input[type="number"]{width:88px;padding:6px;border-radius:6px;border:1px solid #cbd5e1;text-align:center;}
+  .controls{display:flex;gap:8px;}
+  .controls button{padding:8px 10px;border-radius:6px;border:0;background:#2563eb;color:#fff;cursor:pointer;}
+  .grid{max-width:980px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+  .cell{background:#fff;padding:10px;border-radius:8px;box-shadow:0 2px 8px rgba(2,6,23,0.06);display:flex;flex-direction:column;gap:6px;align-items:stretch}
+  .cell .label{font-weight:600;text-align:center;}
+  .cell-row{display:flex;gap:6px;align-items:center;}
+  .cell input.expr{flex:1;padding:6px;border:1px solid #e2e8f0;border-radius:6px;}
+  .cell button.select{padding:6px 8px;border-radius:6px;border:1px solid #60a5fa;background:#e0f2fe;cursor:pointer;}
+  .result-line{max-width:980px;margin:12px auto;padding:10px;background:#fff;border-radius:8px;box-shadow:0 1px 6px rgba(2,6,23,0.05);font-weight:600;}
+  .small{font-size:13px;color:#475569}
+  .expr-value{font-size:13px;color:#0b948d;min-width:70px;text-align:right}
+  .error{color:#dc2626}
+  footer{max-width:980px;margin:14px auto;color:#475569;font-size:13px}
+  @media (max-width:520px){ .grid{grid-template-columns:repeat(2,1fr);} .cell{padding:8px} }
+</style>
+</head>
+<body>
+<h1>49数字自动计算器 v3（保留表达式并显示计算结果）</h1>
+
+<div class="top" role="region" aria-label="Controls">
+  倍数：<input id="multiplier" type="number" value="45" step="any" aria-label="倍数输入">
+  <div class="controls">
+    <button id="applyMultiplier">应用倍数</button>
+    <button id="clearAll">清空全部</button>
+    <button id="fillRandom">随机填值</button>
+    <button id="exportCSV">导出 CSV</button>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="result-line" id="compareResult">请选择一个编号来比较（点击“选中”按钮）</div>
+
+<footer>提示：输入框保留你输入的算式（例如 <code>10+5*2</code> 或 <code>(3+4)/2</code>），右侧会显示该表达式的计算结果。点击编号的“选中”按钮会将该项的计算结果 × 倍数 与其余48项的计算结果之和比较。</footer>
+
+<script>
+/* 安全表达式计算（仅支持数字、+-*/().和空格、小数点、^)
+   ^ 会被替换为 ** 处理幂运算
+   禁止出现字母等可执行代码
+*/
+function safeEvalExpr(src){
+  if (src === null || src === undefined) return 0;
+  // normalize
+  let s = String(src).trim();
+  if (s === '') return 0;
+  // replace unicode chars
+  s = s.replace(/×/g, '*').replace(/÷/g, '/').replace(/，/g, ',').replace(/／/g,'/').replace(/－/g,'-');
+  // allow digits, operators, parens, decimal, spaces, ^ for power
+  if (/[^0-9+\\-*/().\\s,^%]/.test(s)) {
+    // contains illegal character (like letters)
+    throw new Error('表达式含非法字符');
+  }
+  // replace ^ with **
+  s = s.replace(/\\^/g, '**');
+  // Evaluate using Function with no globals
+  try {
+    const fn = new Function('return ('+s+');');
+    const val = fn();
+    if (typeof val === 'number' && !Number.isNaN(val)) return val;
+    return Number(val);
+  } catch (e){
+    throw new Error('表达式无法计算');
+  }
+}
+
+// Build 49 cells
+const grid = document.getElementById('grid');
+const items = [];
+for (let i=1;i<=49;i++){
+  const cell = document.createElement('div');
+  cell.className='cell';
+  cell.innerHTML = `
+    <div class="label">${i}</div>
+    <div class="cell-row">
+      <input class="expr" type="text" id="expr_${i}" placeholder="输入数值或算式" aria-label="表达式 ${i}">
+      <div class="expr-value" id="value_${i}">0</div>
+    </div>
+    <button class="select" data-id="${i}" id="btn_${i}">选中</button>
+    <div class="small error" id="err_${i}" style="display:none"></div>
+  `;
+  grid.appendChild(cell);
+  const input = cell.querySelector('.expr');
+  const valEl = cell.querySelector('.expr-value');
+  const btn = cell.querySelector('.select');
+  const err = cell.querySelector('.error');
+  items.push({id:i,input, valEl, btn, err});
+}
+
+// parse and update single item's computed value (does not change input text)
+function updateItemValue(index){
+  const it = items[index];
+  const expr = it.input.value;
+  try{
+    const v = safeEvalExpr(expr || '0');
+    const vstr = (Number.isFinite(v) ? (Math.round(v*1e12)/1e12) : String(v));
+    it.valEl.textContent = vstr;
+    it.valEl.classList.remove('error');
+    it.err.style.display='none';
+    return v;
+  } catch (e){
+    it.valEl.textContent = '错误';
+    it.err.textContent = e.message;
+    it.err.style.display='block';
+    return NaN;
+  }
+}
+
+// update all
+function updateAllValues(){
+  const arr = [];
+  for (let i=0;i<items.length;i++){
+    arr.push(updateItemValue(i));
+  }
+  return arr;
+}
+
+// attach events: input change -> update that value (but do not overwrite input)
+items.forEach((it, idx) => {
+  it.input.addEventListener('input', ()=>{
+    updateItemValue(idx);
+  });
+  it.input.addEventListener('keydown', (ev)=>{
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      updateItemValue(idx);
+    }
+  });
+  it.btn.addEventListener('click', ()=>{
+    performCompare(it.id);
+  });
+});
+
+const multiplierInput = document.getElementById('multiplier');
+let multiplier = parseFloat(multiplierInput.value) || 45;
+
+document.getElementById('applyMultiplier').addEventListener('click', ()=>{
+  multiplier = parseFloat(multiplierInput.value) || multiplier;
+  const resEl = document.getElementById('compareResult');
+  resEl.textContent = `倍数已设为 ${multiplier} 。请选择一个编号进行比较。`;
+});
+
+document.getElementById('clearAll').addEventListener('click', ()=>{
+  items.forEach(it => {
+    it.input.value = '';
+    it.valEl.textContent = '0';
+    it.err.style.display='none';
+  });
+  currentSelected = null;
+  document.getElementById('compareResult').textContent = '所有数值已清空。';
+});
+
+document.getElementById('fillRandom').addEventListener('click', ()=>{
+  items.forEach((it, idx) => {
+    const a = Math.floor(Math.random()*200)-50;
+    const b = Math.floor(Math.random()*20);
+    const useExpr = Math.random() < 0.35;
+    it.input.value = useExpr ? `${a}+${b}` : String((Math.random()*100).toFixed(2));
+    updateItemValue(idx);
+  });
+  document.getElementById('compareResult').textContent = '已随机生成数值/算式。';
+});
+
+document.getElementById('exportCSV').addEventListener('click', ()=>{
+  const rows = [['id','expression','value','value_times_multiplier']];
+  const vals = updateAllValues();
+  for (let i=0;i<items.length;i++){
+    const expr = items[i].input.value.replace(/"/g, '""');
+    const v = Number.isFinite(vals[i]) ? vals[i] : '';
+    rows.push([i+1, `"${expr}"`, v, v === '' ? '' : (v * multiplier)]);
+  }
+  const csv = rows.map(r => r.join(',')).join('\\n');
+  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'numbers_v3_export.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+let currentSelected = null;
+function performCompare(selectedId){
+  multiplier = parseFloat(multiplierInput.value) || multiplier;
+  const values = updateAllValues();
+  const idx = selectedId - 1;
+  const selVal = values[idx];
+  let sumOthers = 0;
+  for (let i=0;i<values.length;i++){
+    if (i === idx) continue;
+    const v = Number.isFinite(values[i]) ? values[i] : 0;
+    sumOthers += v;
+  }
+  const selNumeric = Number.isFinite(selVal) ? selVal : 0;
+  const selTimes = selNumeric * multiplier;
+  currentSelected = selectedId;
+  const fmt = (x) => (Number.isFinite(x) ? (Math.round(x*1e12)/1e12) : String(x));
+  let status = '';
+  if (selTimes > sumOthers) status = '更大 ✅';
+  else if (selTimes < sumOthers) status = '更小 ❌';
+  else status = '相等 ⚖️';
+  const msg = `编号 ${selectedId}： (${fmt(selNumeric)}) × ${multiplier} = ${fmt(selTimes)}；其余48项之和 = ${fmt(sumOthers)} → ${status}`;
+  document.getElementById('compareResult').innerHTML = msg;
+  items.forEach(it => { it.btn.style.background = ''; it.btn.style.color = ''; });
+  const selBtn = document.getElementById('btn_' + selectedId);
+  if (selBtn) { selBtn.style.background = '#2563eb'; selBtn.style.color = '#fff'; }
+}
+
+updateAllValues();
+</script>
+</body>
+</html>
