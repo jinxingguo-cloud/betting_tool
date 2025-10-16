@@ -1,223 +1,508 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>49数字自动计算器 v3（保留表达式，显示计算结果）</title>
-<style>
-  :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans",Helvetica,Arial;}
-  body{background:#f8fafc;margin:0;padding:18px;color:#0f172a}
-  h1{font-size:18px;text-align:center;margin:6px 0 12px;}
-  .top{max-width:980px;margin:0 auto 12px;display:flex;gap:8px;align-items:center;justify-content:center;}
-  .top input[type="number"]{width:88px;padding:6px;border-radius:6px;border:1px solid #cbd5e1;text-align:center;}
-  .controls{display:flex;gap:8px;}
-  .controls button{padding:8px 10px;border-radius:6px;border:0;background:#2563eb;color:#fff;cursor:pointer;}
-  .grid{max-width:980px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
-  .cell{background:#fff;padding:10px;border-radius:8px;box-shadow:0 2px 8px rgba(2,6,23,0.06);display:flex;flex-direction:column;gap:6px;align-items:stretch}
-  .cell .label{font-weight:600;text-align:center;}
-  .cell-row{display:flex;gap:6px;align-items:center;}
-  .cell input.expr{flex:1;padding:6px;border:1px solid #e2e8f0;border-radius:6px;}
-  .cell button.select{padding:6px 8px;border-radius:6px;border:1px solid #60a5fa;background:#e0f2fe;cursor:pointer;}
-  .result-line{max-width:980px;margin:12px auto;padding:10px;background:#fff;border-radius:8px;box-shadow:0 1px 6px rgba(2,6,23,0.05);font-weight:600;}
-  .small{font-size:13px;color:#475569}
-  .expr-value{font-size:13px;color:#0b948d;min-width:70px;text-align:right}
-  .error{color:#dc2626}
-  footer{max-width:980px;margin:14px auto;color:#475569;font-size:13px}
-  @media (max-width:520px){ .grid{grid-template-columns:repeat(2,1fr);} .cell{padding:8px} }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级投注辅助工具</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        /* 全局与配色 */
+        :root {
+            --dark-blue: #1a202c;
+            --light-gray: #a0aec0;
+            --background-color: #2d3748;
+            --widget-background: #4a5568;
+            --text-color: #f7fafc;
+            --border-color: #718096;
+            --profit-color: #48bb78; /* 盈: 绿色，更醒目 */
+            --loss-color: #f56565;  /* 亏: 红色 */
+            --neutral-color: #a0aec0;/* 平: 灰色 */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--dark-blue);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 统一卡片样式 */
+        .card {
+            background-color: var(--widget-background);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: var(--text-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        /* 投注区 */
+        .betting-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .bet-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--background-color);
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .bet-item .number-id {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .bet-item input {
+            width: 90%;
+            text-align: center;
+            background-color: var(--dark-blue);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        .bet-item .profit-loss {
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .profit { color: var(--profit-color); }
+        .loss { color: var(--loss-color); }
+        .neutral { color: var(--neutral-color); }
+
+        /* 调节区 */
+        .adjustment-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .adjust-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--background-color);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .adjust-item .number-id {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--profit-color);
+        }
+
+        .adjust-item span { margin: 2px 0; }
+        .adjust-item input {
+            width: 80%;
+            margin-top: 5px;
+            text-align: center;
+            background-color: var(--dark-blue);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        /* 实时排列区 */
+        .ranking-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .ranking-area {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .ranking-list {
+            list-style-type: none;
+            padding: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .ranking-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid var(--background-color);
+        }
+        .ranking-list li:nth-child(odd) {
+            background-color: #3c465a;
+        }
+        .ranking-list .rank-id { font-weight: bold; }
+        .ranking-list .rank-value { color: var(--light-gray); }
+        .ranking-list .rank-count { font-size: 0.8em; color: yellow; margin-left: 5px; }
+
+        /* 功能按钮区 */
+        .actions-area {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .actions-area button, .actions-area label {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--border-color);
+            color: var(--text-color);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .actions-area button:hover, .actions-area label:hover {
+            background-color: #a0aec0;
+            color: var(--dark-blue);
+        }
+
+        #import-file {
+            display: none;
+        }
+        
+        /* 响应式布局 */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .ranking-container { flex-direction: column; }
+            .betting-area { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+        }
+    </style>
 </head>
 <body>
-<h1>49数字自动计算器 v3（保留表达式并显示计算结果）</h1>
 
-<div class="top" role="region" aria-label="Controls">
-  倍数：<input id="multiplier" type="number" value="45" step="any" aria-label="倍数输入">
-  <div class="controls">
-    <button id="applyMultiplier">应用倍数</button>
-    <button id="clearAll">清空全部</button>
-    <button id="fillRandom">随机填值</button>
-    <button id="exportCSV">导出 CSV</button>
-  </div>
+<div id="app">
+    <div class="card">
+        <h2>投注区</h2>
+        <div class="betting-area">
+            <div class="bet-item" v-for="item in items" :key="item.id">
+                <span class="number-id">{{ item.id }}</span>
+                <input type="text" v-model="item.rawInput" @input="validateInput(item, 'rawInput')" placeholder="数值/算式">
+                <span class="profit-loss" :class="getProfitLossClass(item.profitLoss)">
+                    {{ item.profitLoss.toFixed(0) }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>调节区 (自动选取数值最大的前20项)</h2>
+        <div class="adjustment-area">
+            <div class="adjust-item" v-for="item in top20Items" :key="item.id">
+                <span class="number-id">{{ item.id }}</span>
+                <span>原值: {{ item.originalValue }}</span>
+                <input type="text" v-model="item.adjustInput" @input="validateInput(item, 'adjustInput')" placeholder="调节值">
+                <span>调后: {{ item.finalValue }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card ranking-container">
+        <div class="ranking-area">
+            <h3>原始排序 (大→小)</h3>
+            <ul class="ranking-list">
+                <li v-for="item in originalRanking" :key="item.id">
+                    <div>
+                        <span class="rank-id">No.{{ item.id }}</span>
+                        <span class="rank-count" v-if="item.count > 1">(x{{ item.count }})</span>
+                    </div>
+                    <span class="rank-value">{{ item.originalValue }}</span>
+                    <span :class="getProfitLossClass(item.originalProfitLoss)">{{ item.originalProfitLoss.toFixed(0) }}</span>
+                </li>
+            </ul>
+        </div>
+        <div class="ranking-area">
+            <h3>调节后排序 (大→小)</h3>
+            <ul class="ranking-list">
+                <li v-for="item in adjustedRanking" :key="item.id">
+                     <div>
+                        <span class="rank-id">No.{{ item.id }}</span>
+                        <span class="rank-count" v-if="item.count > 1">(x{{ item.count }})</span>
+                    </div>
+                    <span class="rank-value">{{ item.finalValue }}</span>
+                    <span :class="getProfitLossClass(item.profitLoss)">{{ item.profitLoss.toFixed(0) }}</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="card actions-area">
+        <button @click="fillRandomValues">随机填值</button>
+        <button @click="resetAll">恢复空白</button>
+        <label for="import-file">导入JSON</label>
+        <input type="file" id="import-file" @change="importFromFile" accept=".json, .txt">
+    </div>
+
 </div>
 
-<div class="grid" id="grid"></div>
-
-<div class="result-line" id="compareResult">请选择一个编号来比较（点击“选中”按钮）</div>
-
-<footer>提示：输入框保留你输入的算式（例如 <code>10+5*2</code> 或 <code>(3+4)/2</code>），右侧会显示该表达式的计算结果。点击编号的“选中”按钮会将该项的计算结果 × 倍数 与其余48项的计算结果之和比较。</footer>
-
 <script>
-/* 安全表达式计算（仅支持数字、+-*/().和空格、小数点、^)
-   ^ 会被替换为 ** 处理幂运算
-   禁止出现字母等可执行代码
-*/
-function safeEvalExpr(src){
-  if (src === null || src === undefined) return 0;
-  // normalize
-  let s = String(src).trim();
-  if (s === '') return 0;
-  // replace unicode chars
-  s = s.replace(/×/g, '*').replace(/÷/g, '/').replace(/，/g, ',').replace(/／/g,'/').replace(/－/g,'-');
-  // allow digits, operators, parens, decimal, spaces, ^ for power
-  if (/[^0-9+\\-*/().\\s,^%]/.test(s)) {
-    // contains illegal character (like letters)
-    throw new Error('表达式含非法字符');
-  }
-  // replace ^ with **
-  s = s.replace(/\\^/g, '**');
-  // Evaluate using Function with no globals
-  try {
-    const fn = new Function('return ('+s+');');
-    const val = fn();
-    if (typeof val === 'number' && !Number.isNaN(val)) return val;
-    return Number(val);
-  } catch (e){
-    throw new Error('表达式无法计算');
-  }
-}
+    const { createApp, ref, computed, watch, onMounted } = Vue;
 
-// Build 49 cells
-const grid = document.getElementById('grid');
-const items = [];
-for (let i=1;i<=49;i++){
-  const cell = document.createElement('div');
-  cell.className='cell';
-  cell.innerHTML = `
-    <div class="label">${i}</div>
-    <div class="cell-row">
-      <input class="expr" type="text" id="expr_${i}" placeholder="输入数值或算式" aria-label="表达式 ${i}">
-      <div class="expr-value" id="value_${i}">0</div>
-    </div>
-    <button class="select" data-id="${i}" id="btn_${i}">选中</button>
-    <div class="small error" id="err_${i}" style="display:none"></div>
-  `;
-  grid.appendChild(cell);
-  const input = cell.querySelector('.expr');
-  const valEl = cell.querySelector('.expr-value');
-  const btn = cell.querySelector('.select');
-  const err = cell.querySelector('.error');
-  items.push({id:i,input, valEl, btn, err});
-}
+    createApp({
+        setup() {
+            // 核心数据状态
+            const items = ref(
+                Array.from({ length: 49 }, (_, i) => ({
+                    id: i + 1,
+                    rawInput: '',      // 原始输入框 (可为算式)
+                    adjustInput: ''  // 调节输入框
+                }))
+            );
 
-// parse and update single item's computed value (does not change input text)
-function updateItemValue(index){
-  const it = items[index];
-  const expr = it.input.value;
-  try{
-    const v = safeEvalExpr(expr || '0');
-    const vstr = (Number.isFinite(v) ? (Math.round(v*1e12)/1e12) : String(v));
-    it.valEl.textContent = vstr;
-    it.valEl.classList.remove('error');
-    it.err.style.display='none';
-    return v;
-  } catch (e){
-    it.valEl.textContent = '错误';
-    it.err.textContent = e.message;
-    it.err.style.display='block';
-    return NaN;
-  }
-}
+            // --- 核心计算逻辑 (Computed Properties) ---
 
-// update all
-function updateAllValues(){
-  const arr = [];
-  for (let i=0;i<items.length;i++){
-    arr.push(updateItemValue(i));
-  }
-  return arr;
-}
+            // 1. 计算每个项目的数值 (处理算式) 和最终值
+            const processedItems = computed(() => {
+                return items.value.map(item => {
+                    const originalValue = parseExpression(item.rawInput);
+                    const adjustValue = parseExpression(item.adjustInput);
+                    const finalValue = originalValue - adjustValue;
+                    return {
+                        ...item,
+                        originalValue,
+                        adjustValue,
+                        finalValue: finalValue >= 0 ? finalValue : 0 // 确保调节后不为负
+                    };
+                });
+            });
 
-// attach events: input change -> update that value (but do not overwrite input)
-items.forEach((it, idx) => {
-  it.input.addEventListener('input', ()=>{
-    updateItemValue(idx);
-  });
-  it.input.addEventListener('keydown', (ev)=>{
-    if (ev.key === 'Enter') {
-      ev.preventDefault();
-      updateItemValue(idx);
-    }
-  });
-  it.btn.addEventListener('click', ()=>{
-    performCompare(it.id);
-  });
-});
+            // 2. 计算总和 (基于调节后的最终值)
+            const totalSum = computed(() => {
+                return processedItems.value.reduce((sum, item) => sum + item.finalValue, 0);
+            });
 
-const multiplierInput = document.getElementById('multiplier');
-let multiplier = parseFloat(multiplierInput.value) || 45;
+             // 3. 将盈亏计算与最终值绑定
+            const itemsWithProfitLoss = computed(() => {
+                const currentTotalSum = totalSum.value;
+                return processedItems.value.map(item => {
+                    const profitLoss = currentTotalSum - (item.finalValue * 45);
+                    // 为原始排序区单独计算盈亏
+                    const originalTotalSum = processedItems.value.reduce((sum, i) => sum + i.originalValue, 0);
+                    const originalProfitLoss = originalTotalSum - (item.originalValue * 45);
 
-document.getElementById('applyMultiplier').addEventListener('click', ()=>{
-  multiplier = parseFloat(multiplierInput.value) || multiplier;
-  const resEl = document.getElementById('compareResult');
-  resEl.textContent = `倍数已设为 ${multiplier} 。请选择一个编号进行比较。`;
-});
+                    return { ...item, profitLoss, originalProfitLoss };
+                });
+            });
 
-document.getElementById('clearAll').addEventListener('click', ()=>{
-  items.forEach(it => {
-    it.input.value = '';
-    it.valEl.textContent = '0';
-    it.err.style.display='none';
-  });
-  currentSelected = null;
-  document.getElementById('compareResult').textContent = '所有数值已清空。';
-});
+            // 4. 调节区: 自动筛选出原始值最大的前20项
+            const top20Items = computed(() => {
+                // 注意：这里需要能直接修改原始 items, 所以我们返回的是 items.value 中对应的项
+                const sorted = [...processedItems.value]
+                    .sort((a, b) => b.originalValue - a.originalValue);
+                const top20Ids = sorted.slice(0, 20).filter(item => item.originalValue > 0).map(item => item.id);
+                
+                // 返回原始 items 数组中对应的对象，以确保 v-model 能双向绑定
+                return items.value.filter(item => top20Ids.includes(item.id))
+                                  .sort((a, b) => {
+                                      const valA = parseExpression(a.rawInput);
+                                      const valB = parseExpression(b.rawInput);
+                                      return valB - valA;
+                                  });
+            });
 
-document.getElementById('fillRandom').addEventListener('click', ()=>{
-  items.forEach((it, idx) => {
-    const a = Math.floor(Math.random()*200)-50;
-    const b = Math.floor(Math.random()*20);
-    const useExpr = Math.random() < 0.35;
-    it.input.value = useExpr ? `${a}+${b}` : String((Math.random()*100).toFixed(2));
-    updateItemValue(idx);
-  });
-  document.getElementById('compareResult').textContent = '已随机生成数值/算式。';
-});
+            // 5. 实时排列区 (原始)
+            const originalRanking = computed(() => {
+                return generateRanking(itemsWithProfitLoss.value, 'originalValue', 'originalProfitLoss');
+            });
 
-document.getElementById('exportCSV').addEventListener('click', ()=>{
-  const rows = [['id','expression','value','value_times_multiplier']];
-  const vals = updateAllValues();
-  for (let i=0;i<items.length;i++){
-    const expr = items[i].input.value.replace(/"/g, '""');
-    const v = Number.isFinite(vals[i]) ? vals[i] : '';
-    rows.push([i+1, `"${expr}"`, v, v === '' ? '' : (v * multiplier)]);
-  }
-  const csv = rows.map(r => r.join(',')).join('\\n');
-  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'numbers_v3_export.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-});
+            // 6. 实时排列区 (调节后)
+            const adjustedRanking = computed(() => {
+                 return generateRanking(itemsWithProfitLoss.value, 'finalValue', 'profitLoss');
+            });
 
-let currentSelected = null;
-function performCompare(selectedId){
-  multiplier = parseFloat(multiplierInput.value) || multiplier;
-  const values = updateAllValues();
-  const idx = selectedId - 1;
-  const selVal = values[idx];
-  let sumOthers = 0;
-  for (let i=0;i<values.length;i++){
-    if (i === idx) continue;
-    const v = Number.isFinite(values[i]) ? values[i] : 0;
-    sumOthers += v;
-  }
-  const selNumeric = Number.isFinite(selVal) ? selVal : 0;
-  const selTimes = selNumeric * multiplier;
-  currentSelected = selectedId;
-  const fmt = (x) => (Number.isFinite(x) ? (Math.round(x*1e12)/1e12) : String(x));
-  let status = '';
-  if (selTimes > sumOthers) status = '更大 ✅';
-  else if (selTimes < sumOthers) status = '更小 ❌';
-  else status = '相等 ⚖️';
-  const msg = `编号 ${selectedId}： (${fmt(selNumeric)}) × ${multiplier} = ${fmt(selTimes)}；其余48项之和 = ${fmt(sumOthers)} → ${status}`;
-  document.getElementById('compareResult').innerHTML = msg;
-  items.forEach(it => { it.btn.style.background = ''; it.btn.style.color = ''; });
-  const selBtn = document.getElementById('btn_' + selectedId);
-  if (selBtn) { selBtn.style.background = '#2563eb'; selBtn.style.color = '#fff'; }
-}
 
-updateAllValues();
+            // --- 辅助函数 ---
+
+            // 统一的输入验证，禁止负数和小数
+            const validateInput = (item, prop) => {
+                let value = item[prop];
+                // 移除非数字、非运算符字符，但保留基本运算
+                value = value.replace(/[^0-9+\-*/().]/g, '');
+                 // 不允许以运算符开头
+                if (/^[+\-*/]/.test(value)) {
+                    value = '';
+                }
+                item[prop] = value;
+            }
+            
+            // 解析算式，返回正整数
+            const parseExpression = (expression) => {
+                if (typeof expression !== 'string' || expression.trim() === '') {
+                    return 0;
+                }
+                try {
+                    // 使用 Function 构造函数代替 eval，相对安全一些
+                    const result = new Function('return ' + expression)();
+                    if (isNaN(result) || !isFinite(result)) return 0;
+                    // 返回非负整数
+                    return Math.max(0, Math.floor(result));
+                } catch (error) {
+                    return 0; // 如果表达式错误，返回0
+                }
+            };
+
+            const getProfitLossClass = (value) => {
+                if (value > 0) return 'profit';
+                if (value < 0) return 'loss';
+                return 'neutral';
+            };
+
+            const generateRanking = (sourceItems, valueKey, profitLossKey) => {
+                const valueMap = new Map();
+                
+                sourceItems.forEach(item => {
+                    const value = item[valueKey];
+                    if (value > 0) {
+                        if (!valueMap.has(value)) {
+                            valueMap.set(value, []);
+                        }
+                        valueMap.get(value).push(item);
+                    }
+                });
+
+                const sortedValues = [...valueMap.keys()].sort((a, b) => b - a);
+
+                const rankedList = [];
+                sortedValues.forEach(value => {
+                    const itemsAtThisRank = valueMap.get(value);
+                    itemsAtThisRank.forEach(item => {
+                        rankedList.push({
+                            id: item.id,
+                            [valueKey]: item[valueKey],
+                            [profitLossKey]: item[profitLossKey],
+                            count: itemsAtThisRank.length
+                        });
+                    });
+                });
+                return rankedList;
+            };
+
+            // --- 功能区方法 ---
+
+            const fillRandomValues = () => {
+                items.value.forEach(item => {
+                    item.rawInput = String(Math.floor(Math.random() * 1000) + 1);
+                    item.adjustInput = ''; // 清空调节值
+                });
+            };
+
+            const resetAll = () => {
+                if (confirm('确定要清除所有输入与调节值吗？')) {
+                    items.value.forEach(item => {
+                        item.rawInput = '';
+                        item.adjustInput = '';
+                    });
+                }
+            };
+            
+            // --- 保存与导入 ---
+
+            const saveData = () => {
+                try {
+                    const dataToSave = items.value.map(item => ({
+                        id: item.id,
+                        rawInput: item.rawInput,
+                        adjustInput: item.adjustInput
+                    }));
+                    localStorage.setItem('bettingToolData', JSON.stringify(dataToSave));
+                } catch (e) {
+                    console.error("保存失败:", e);
+                }
+            };
+
+            const loadData = () => {
+                try {
+                    const savedData = localStorage.getItem('bettingToolData');
+                    if (savedData) {
+                        const parsedData = JSON.parse(savedData);
+                        if (Array.isArray(parsedData) && parsedData.length === 49) {
+                            items.value = parsedData.map((d, i) => ({
+                                id: d.id || i + 1,
+                                rawInput: d.rawInput || '',
+                                adjustInput: d.adjustInput || ''
+                            }));
+                        }
+                    }
+                } catch (e) {
+                    console.error("加载失败:", e);
+                }
+            };
+
+            const importFromFile = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const content = e.target.result;
+                        const parsedData = JSON.parse(content);
+                        if (Array.isArray(parsedData) && parsedData.length === 49) {
+                            items.value = parsedData.map((d, i) => ({
+                                id: d.id || i + 1,
+                                rawInput: d.rawInput || '',
+                                adjustInput: d.adjustInput || ''
+                            }));
+                             alert('导入成功！');
+                        } else {
+                            alert('JSON文件格式不正确，需要包含49个项目的数组。');
+                        }
+                    } catch (error) {
+                        alert('读取或解析文件失败！请确保是合法的JSON文件。');
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = ''; // 清空，以便再次上传同名文件
+            };
+            
+            // 侦听 items 的深度变化，自动保存
+            watch(items, saveData, { deep: true });
+
+            // 页面加载时，自动载入数据
+            onMounted(loadData);
+
+            return {
+                // 将 itemsWithProfitLoss 暴露给模板，因为模板直接使用它
+                items: itemsWithProfitLoss,
+                top20Items,
+                originalRanking,
+                adjustedRanking,
+                getProfitLossClass,
+                fillRandomValues,
+                resetAll,
+                importFromFile,
+                validateInput
+            };
+        }
+    }).mount('#app');
 </script>
+
 </body>
 </html>
