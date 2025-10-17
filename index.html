@@ -6,7 +6,7 @@
     <title>投注分析工具 Pro</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        /* --- iPhone 风格美化 --- */
+        /* CSS样式与之前版本相同，无需修改 */
         :root {
             --bg-color: #f0f2f5;
             --card-bg-color: #ffffff;
@@ -19,7 +19,6 @@
             --neutral-color: #8e8e93;
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-color);
@@ -27,7 +26,6 @@
             margin: 0;
             padding: 16px;
         }
-
         #app {
             display: flex;
             flex-direction: column;
@@ -35,26 +33,14 @@
             max-width: 1200px;
             margin: 0 auto;
         }
-
-        /* --- Logo 与顶部标题 --- */
         .header {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 0 10px;
         }
-
-        .logo {
-            width: 40px;
-            height: 40px;
-        }
-
-        .app-title {
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
-        /* --- 统一卡片样式 --- */
+        .logo { width: 40px; height: 40px; }
+        .app-title { font-size: 24px; font-weight: 600; }
         .card {
             background-color: var(--card-bg-color);
             border-radius: 12px;
@@ -62,7 +48,6 @@
             box-shadow: var(--shadow);
             border: 1px solid var(--border-color);
         }
-
         h2 {
             font-size: 20px;
             font-weight: 600;
@@ -72,27 +57,22 @@
             margin-top: 0;
             margin-bottom: 16px;
         }
-
-        /* --- 顶部功能区 --- */
         .top-actions-card {
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
-
         .actions-bar {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
             align-items: center;
         }
-        
         .multiplier-group {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-
         .multiplier-group input {
             width: 60px;
             padding: 8px 12px;
@@ -101,7 +81,6 @@
             text-align: center;
             font-size: 16px;
         }
-
         .actions-bar button, .actions-bar .file-label {
             display: inline-flex;
             align-items: center;
@@ -116,19 +95,10 @@
             cursor: pointer;
             transition: transform 0.1s, background-color 0.2s;
         }
-        .actions-bar button:hover {
-            background-color: #0056b3;
-            transform: scale(1.02);
-        }
-        .actions-bar button.secondary {
-             background-color: var(--secondary-text-color);
-        }
-         .actions-bar button.secondary:hover {
-             background-color: #4a4f55;
-        }
+        .actions-bar button:hover { background-color: #0056b3; transform: scale(1.02); }
+        .actions-bar button.secondary { background-color: var(--secondary-text-color); }
+        .actions-bar button.secondary:hover { background-color: #4a4f55; }
         #import-file { display: none; }
-
-        /* --- 数据总览区 --- */
         .summary-bar {
             display: flex;
             justify-content: space-around;
@@ -138,21 +108,9 @@
             padding: 12px;
             gap: 15px;
         }
-        .summary-item {
-            text-align: center;
-        }
-        .summary-item .label {
-            font-size: 14px;
-            color: var(--secondary-text-color);
-            margin-bottom: 4px;
-        }
-        .summary-item .value {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        /* --- 投注区 --- */
+        .summary-item { text-align: center; }
+        .summary-item .label { font-size: 14px; color: var(--secondary-text-color); margin-bottom: 4px; }
+        .summary-item .value { font-size: 20px; font-weight: 600; color: var(--primary-color); }
         .betting-area {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -167,12 +125,7 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
         }
-        .bet-item .number-id {
-            font-weight: bold;
-            font-size: 1.1em;
-            margin-bottom: 8px;
-            color: var(--primary-color);
-        }
+        .bet-item .number-id { font-weight: bold; font-size: 1.1em; margin-bottom: 8px; color: var(--primary-color); }
         .bet-item input {
             width: 90%;
             text-align: center;
@@ -188,21 +141,8 @@
         .profit { color: var(--profit-color); }
         .loss { color: var(--loss-color); }
         .neutral { color: var(--neutral-color); }
-
-        /* --- 调节区 & 排列区 (微调) --- */
-        .adjustment-area {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 12px;
-        }
-        .adjust-item {
-            background-color: #f8f9fa;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 8px;
-            font-size: 0.9em;
-            text-align: center;
-        }
+        .adjustment-area { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+        .adjust-item { background-color: #f8f9fa; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; font-size: 0.9em; text-align: center; }
         .adjust-item .number-id { font-size: 1.2em; font-weight: bold; color: var(--profit-color); }
         .adjust-item input { width: 85%; margin-top: 4px; text-align: center; border-radius: 4px; border: 1px solid var(--border-color); }
         .ranking-container { display: flex; gap: 20px; flex-wrap: wrap; }
@@ -214,7 +154,6 @@
         .ranking-list .rank-value { color: var(--secondary-text-color); }
         .ranking-list .rank-count { font-size: 0.8em; color: var(--primary-color); margin-left: 5px; font-weight: bold; }
         
-        /* 响应式布局 */
         @media (max-width: 768px) {
             body { padding: 8px; }
             .header { padding: 0; justify-content: center; }
@@ -255,16 +194,13 @@
         </div>
         <div class="summary-bar">
             <div class="summary-item">
-                <div class="label">调节前总和</div>
-                <div class="value">{{ originalTotalSum.toLocaleString() }}</div>
+                <div class="label">调节前总和</div><div class="value">{{ originalTotalSum.toLocaleString() }}</div>
             </div>
             <div class="summary-item">
-                <div class="label">调节值总和</div>
-                <div class="value">{{ adjustmentTotalSum.toLocaleString() }}</div>
+                <div class="label">调节值总和</div><div class="value">{{ adjustmentTotalSum.toLocaleString() }}</div>
             </div>
              <div class="summary-item">
-                <div class="label">调节后总和</div>
-                <div class="value">{{ adjustedTotalSum.toLocaleString() }}</div>
+                <div class="label">调节后总和</div><div class="value">{{ adjustedTotalSum.toLocaleString() }}</div>
             </div>
         </div>
     </div>
@@ -274,14 +210,8 @@
         <div class="betting-area">
             <div class="bet-item" v-for="item in items" :key="item.id">
                 <span class="number-id">{{ item.id }}</span>
-                <input type="text" 
-                    v-model="item.rawInput" 
-                    @input="validateInput(item, 'rawInput')"
-                    @blur="calculateAndDisplayResult(item, 'rawInput')"
-                    placeholder="金额">
-                <span class="profit-loss" :class="getProfitLossClass(item.profitLoss)">
-                    {{ item.profitLoss.toFixed(0) }}
-                </span>
+                <input type="text" v-model="item.rawInput" @input="validateInput(item, 'rawInput')" @blur="calculateAndDisplayResult(item, 'rawInput')" placeholder="金额">
+                <span class="profit-loss" :class="getProfitLossClass(item.profitLoss)">{{ item.profitLoss.toFixed(0) }}</span>
             </div>
         </div>
     </div>
@@ -292,11 +222,7 @@
             <div class="adjust-item" v-for="item in top20Items" :key="item.id">
                 <span class="number-id">{{ item.id }}</span>
                 <span>原: {{ parseExpression(item.rawInput) }}</span>
-                <input type="text" 
-                    v-model="item.adjustInput" 
-                    @input="validateInput(item, 'adjustInput')"
-                    @blur="calculateAndDisplayResult(item, 'adjustInput')"
-                    placeholder="调节">
+                <input type="text" v-model="item.adjustInput" @input="validateInput(item, 'adjustInput')" @blur="calculateAndDisplayResult(item, 'adjustInput')" placeholder="调节">
                 <span>后: {{ calculateAdjustedValue(item) }}</span>
             </div>
         </div>
@@ -331,20 +257,28 @@
 
     createApp({
         setup() {
-            // --- 核心数据 ---
-            const items = ref(Array.from({ length: 49 }, (_, i) => ({ id: i + 1, rawInput: '', adjustInput: '' })));
-            const multiplier = ref(1); // 新增：倍数调整
+            const items = ref([]);
+            const multiplier = ref(1);
 
-            // --- 核心计算逻辑 ---
+            const initializeItems = () => {
+                const initialData = Array.from({ length: 49 }, (_, i) => ({
+                    id: i + 1,
+                    rawInput: '',
+                    adjustInput: ''
+                }));
+                items.value = initialData;
+            };
+            
             const parseExpression = (expression) => {
                 if (typeof expression !== 'string' || expression.trim() === '') return 0;
                 try {
-                    const result = new Function('return ' + expression.replace(/[^0-9+\-*/().]/g, ''))();
-                    if (isNaN(result) || !isFinite(result)) return 0;
-                    return Math.max(0, Math.floor(result));
+                    const sanitized = String(expression).replace(/[^0-9+\-*/().]/g, '');
+                    if (!sanitized) return 0;
+                    const result = new Function('return ' + sanitized)();
+                    return isFinite(result) ? Math.max(0, Math.floor(result)) : 0;
                 } catch { return 0; }
             };
-            
+
             const processedItems = computed(() => items.value.map(item => {
                 const originalValue = parseExpression(item.rawInput);
                 const adjustValue = parseExpression(item.adjustInput);
@@ -353,12 +287,13 @@
             }));
 
             const itemsWithProfitLoss = computed(() => {
-                const adjustedTotalSum = processedItems.value.reduce((sum, i) => sum + i.finalValue, 0);
-                const originalTotalSum = processedItems.value.reduce((sum, i) => sum + i.originalValue, 0);
+                if (!items.value || items.value.length === 0) return [];
+                const adjustedTotal = processedItems.value.reduce((s, i) => s + i.finalValue, 0);
+                const originalTotal = processedItems.value.reduce((s, i) => s + i.originalValue, 0);
                 return processedItems.value.map(item => ({
                     ...item,
-                    profitLoss: adjustedTotalSum - (item.finalValue * 45),
-                    originalProfitLoss: originalTotalSum - (item.originalValue * 45)
+                    profitLoss: adjustedTotal - (item.finalValue * 45),
+                    originalProfitLoss: originalTotal - (item.originalValue * 45)
                 }));
             });
 
@@ -367,20 +302,8 @@
                 return items.value.filter(item => sortedIds.includes(item.id)).sort((a, b) => parseExpression(b.rawInput) - parseExpression(a.rawInput));
             });
 
-            const originalRanking = computed(() => generateRanking(itemsWithProfitLoss.value, 'originalValue', 'originalProfitLoss'));
-            const adjustedRanking = computed(() => generateRanking(itemsWithProfitLoss.value, 'finalValue', 'profitLoss'));
-            
-            // --- 新增：数据总览计算属性 ---
-            const originalTotalSum = computed(() => processedItems.value.reduce((sum, item) => sum + item.originalValue, 0));
-            const adjustedTotalSum = computed(() => processedItems.value.reduce((sum, item) => sum + item.finalValue, 0));
-            const adjustmentTotalSum = computed(() => processedItems.value.reduce((sum, item) => sum + item.adjustValue, 0));
-
-            // --- 辅助与事件处理函数 ---
-            const validateInput = (item, prop) => { item[prop] = item[prop].replace(/[^0-9+\-*/().]/g, ''); };
-            const calculateAndDisplayResult = (item, prop) => { if(item[prop].trim() === '') return; item[prop] = String(parseExpression(item[prop])); };
-            const calculateAdjustedValue = (item) => Math.max(0, parseExpression(item.rawInput) - parseExpression(item.adjustInput));
-            const getProfitLossClass = (value) => { if (value > 0) return 'profit'; if (value < 0) return 'loss'; return 'neutral'; };
             const generateRanking = (source, valueKey, profitLossKey) => {
+                if (!source) return [];
                 const map = new Map();
                 source.forEach(item => {
                     const value = item[valueKey];
@@ -393,77 +316,76 @@
                 const list = [];
                 sorted.forEach(value => {
                     const itemsAtRank = map.get(value);
-                    itemsAtRank.forEach(item => list.push({ id: item.id, [valueKey]: item[valueKey], [profitLossKey]: item[profitLossKey], count: itemsAtRank.length }));
+                    itemsAtRank.forEach(item => list.push({ id: item.id, [valueKey]: value, [profitLossKey]: item[profitLossKey], count: itemsAtRank.length }));
                 });
                 return list;
             };
 
-            // --- 新增/优化的功能区方法 ---
+            const originalRanking = computed(() => generateRanking(itemsWithProfitLoss.value, 'originalValue', 'originalProfitLoss'));
+            const adjustedRanking = computed(() => generateRanking(itemsWithProfitLoss.value, 'finalValue', 'profitLoss'));
+            
+            const originalTotalSum = computed(() => processedItems.value.reduce((s, i) => s + i.originalValue, 0));
+            const adjustedTotalSum = computed(() => processedItems.value.reduce((s, i) => s + i.finalValue, 0));
+            const adjustmentTotalSum = computed(() => processedItems.value.reduce((s, i) => s + i.adjustValue, 0));
+
+            const validateInput = (item, prop) => { item[prop] = String(item[prop]).replace(/[^0-9+\-*/().]/g, ''); };
+            const calculateAndDisplayResult = (item, prop) => { item[prop] = String(parseExpression(item[prop])); };
+            const calculateAdjustedValue = (item) => Math.max(0, parseExpression(item.rawInput) - parseExpression(item.adjustInput));
+            const getProfitLossClass = (value) => { if (value > 0) return 'profit'; if (value < 0) return 'loss'; return 'neutral'; };
+
             const applyMultiplier = () => {
                 const multi = parseFloat(multiplier.value);
-                if (isNaN(multi) || multi < 0) {
-                    alert('请输入一个有效的正数倍数！');
-                    return;
-                }
+                if (isNaN(multi) || multi < 0) return alert('请输入有效的正数倍数！');
                 items.value.forEach(item => {
-                    const currentValue = parseExpression(item.rawInput);
-                    if (currentValue > 0) {
-                        item.rawInput = String(Math.round(currentValue * multi));
-                    }
+                    const val = parseExpression(item.rawInput);
+                    if (val > 0) item.rawInput = String(Math.round(val * multi));
                 });
             };
             const clearAll = () => {
-                if (confirm('确定要清空所有投注和调节数据吗？此操作不可撤销。')) {
-                    items.value.forEach(item => {
-                        item.rawInput = '';
-                        item.adjustInput = '';
-                    });
-                }
+                if (confirm('确定要清空所有数据吗？')) initializeItems();
             };
             const exportData = () => {
-                const dataStr = JSON.stringify(items.value.map(i => ({id: i.id, rawInput: i.rawInput, adjustInput: i.adjustInput})), null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
+                const data = JSON.stringify(items.value.map(i => ({ id: i.id, rawInput: i.rawInput, adjustInput: i.adjustInput })), null, 2);
+                const blob = new Blob([data], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                const date = new Date().toISOString().slice(0, 10);
                 a.href = url;
-                a.download = `betting_backup_${date}.json`;
-                document.body.appendChild(a);
+                a.download = `betting_backup_${new Date().toISOString().slice(0, 10)}.json`;
                 a.click();
-                document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             };
             const importFromFile = (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = e => {
                     try {
                         const data = JSON.parse(e.target.result);
                         if (Array.isArray(data) && data.length === 49 && 'rawInput' in data[0]) {
-                            items.value = data.map((d, i) => ({ id: d.id || i + 1, rawInput: d.rawInput || '', adjustInput: d.adjustInput || '' }));
+                            items.value = data.map((d, i) => ({ ...d, id: d.id || i + 1 }));
                             alert('数据恢复成功！');
-                        } else { alert('导入失败：文件格式不正确。'); }
+                        } else alert('导入失败：文件格式不正确。');
                     } catch { alert('导入失败：无法解析文件。'); }
                 };
                 reader.readAsText(file);
                 event.target.value = '';
             };
             
-            // --- 数据持久化 (LocalStorage) ---
-            const saveData = () => {
-                const dataToSave = items.value.map(i => ({ id: i.id, rawInput: i.rawInput, adjustInput: i.adjustInput }));
-                localStorage.setItem('bettingToolData_v3', JSON.stringify(dataToSave));
-            };
+            const saveData = () => localStorage.setItem('bettingToolData_v3', JSON.stringify(items.value));
             const loadData = () => {
-                const savedData = localStorage.getItem('bettingToolData_v3');
-                if (savedData) {
-                    const parsed = JSON.parse(savedData);
-                    if (Array.isArray(parsed) && parsed.length === 49) {
-                        items.value = parsed;
-                    }
+                const saved = localStorage.getItem('bettingToolData_v3');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        if (Array.isArray(parsed) && parsed.length === 49) {
+                            items.value = parsed;
+                            return;
+                        }
+                    } catch { /* 忽略损坏的数据 */ }
                 }
+                initializeItems();
             };
+            
             watch(items, saveData, { deep: true });
             onMounted(loadData);
 
