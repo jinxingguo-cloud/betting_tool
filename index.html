@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>投注分析工具 Pro</title>
+    <title>投注分析工具 Pro (V3.2)</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        /* CSS样式与之前版本相同，无需修改 */
         :root {
             --bg-color: #f0f2f5;
             --card-bg-color: #ffffff;
@@ -14,9 +13,10 @@
             --secondary-text-color: #606770;
             --border-color: #e2e8f0;
             --primary-color: #007aff;
-            --profit-color: #34c759;
-            --loss-color: #ff3b30;
-            --neutral-color: #8e8e93;
+            /* [颜色优化] 盈利改为蓝色，持平改为深色文字 */
+            --profit-color: #007aff; /* Blue */
+            --loss-color: #ff3b30;   /* Red */
+            --neutral-color: #1d2129;/* Black */
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
         body {
@@ -153,7 +153,7 @@
         .ranking-list .rank-id { font-weight: bold; }
         .ranking-list .rank-value { color: var(--secondary-text-color); }
         .ranking-list .rank-count { font-size: 0.8em; color: var(--primary-color); margin-left: 5px; font-weight: bold; }
-        
+        
         @media (max-width: 768px) {
             body { padding: 8px; }
             .header { padding: 0; justify-content: center; }
@@ -187,6 +187,7 @@
                 <input type="number" v-model.number="multiplier" min="0" placeholder="倍数">
                 <button @click="applyMultiplier">⚙️ 应用倍数</button>
             </div>
+            <button @click="fillRandomValues" class="secondary">🎲 随机填值</button>
             <button @click="exportData">📤 导出备份</button>
             <label for="import-file" class="file-label">📥 导入恢复</label>
             <input type="file" id="import-file" @change="importFromFile" accept=".json">
@@ -208,7 +209,7 @@
     <div class="card">
         <h2>投注区</h2>
         <div class="betting-area">
-            <div class="bet-item" v-for="item in items" :key="item.id">
+            <div class="bet-item" v-for="item in itemsWithProfitLoss" :key="item.id">
                 <span class="number-id">{{ item.id }}</span>
                 <input type="text" v-model="item.rawInput" @input="validateInput(item, 'rawInput')" @blur="calculateAndDisplayResult(item, 'rawInput')" placeholder="金额">
                 <span class="profit-loss" :class="getProfitLossClass(item.profitLoss)">{{ item.profitLoss.toFixed(0) }}</span>
@@ -261,14 +262,11 @@
             const multiplier = ref(1);
 
             const initializeItems = () => {
-                const initialData = Array.from({ length: 49 }, (_, i) => ({
-                    id: i + 1,
-                    rawInput: '',
-                    adjustInput: ''
+                items.value = Array.from({ length: 49 }, (_, i) => ({
+                    id: i + 1, rawInput: '', adjustInput: ''
                 }));
-                items.value = initialData;
             };
-            
+            
             const parseExpression = (expression) => {
                 if (typeof expression !== 'string' || expression.trim() === '') return 0;
                 try {
@@ -286,19 +284,26 @@
                 return { ...item, originalValue, adjustValue, finalValue };
             }));
 
+            // [核心修改] 盈亏计算逻辑更新
             const itemsWithProfitLoss = computed(() => {
                 if (!items.value || items.value.length === 0) return [];
+                
+                // 动态计算因子，基数45乘以功能区的倍数，如果倍数无效则默认为1
+                const calculationFactor = 45 * (parseFloat(multiplier.value) || 1);
+                
                 const adjustedTotal = processedItems.value.reduce((s, i) => s + i.finalValue, 0);
                 const originalTotal = processedItems.value.reduce((s, i) => s + i.originalValue, 0);
+
                 return processedItems.value.map(item => ({
                     ...item,
-                    profitLoss: adjustedTotal - (item.finalValue * 45),
-                    originalProfitLoss: originalTotal - (item.originalValue * 45)
+                    profitLoss: adjustedTotal - (item.finalValue * calculationFactor),
+                    originalProfitLoss: originalTotal - (item.originalValue * calculationFactor)
                 }));
             });
 
             const top20Items = computed(() => {
                 const sortedIds = processedItems.value.filter(p => p.originalValue > 0).sort((a, b) => b.originalValue - a.originalValue).slice(0, 20).map(p => p.id);
+                // 这里返回原始 items 里的数据，以保证 v-model 能正常双向绑定
                 return items.value.filter(item => sortedIds.includes(item.id)).sort((a, b) => parseExpression(b.rawInput) - parseExpression(a.rawInput));
             });
 
@@ -323,7 +328,7 @@
 
             const originalRanking = computed(() => generateRanking(itemsWithProfitLoss.value, 'originalValue', 'originalProfitLoss'));
             const adjustedRanking = computed(() => generateRanking(itemsWithProfitLoss.value, 'finalValue', 'profitLoss'));
-            
+            
             const originalTotalSum = computed(() => processedItems.value.reduce((s, i) => s + i.originalValue, 0));
             const adjustedTotalSum = computed(() => processedItems.value.reduce((s, i) => s + i.finalValue, 0));
             const adjustmentTotalSum = computed(() => processedItems.value.reduce((s, i) => s + i.adjustValue, 0));
@@ -333,6 +338,15 @@
             const calculateAdjustedValue = (item) => Math.max(0, parseExpression(item.rawInput) - parseExpression(item.adjustInput));
             const getProfitLossClass = (value) => { if (value > 0) return 'profit'; if (value < 0) return 'loss'; return 'neutral'; };
 
+            // [新增] 随机填值函数
+            const fillRandomValues = () => {
+                if (!confirm('这将覆盖所有投注区现有数值，确定吗？')) return;
+                items.value.forEach(item => {
+                    item.rawInput = String(Math.floor(Math.random() * 1000) + 1);
+                    item.adjustInput = ''; // 同时清空调节值
+                });
+            };
+
             const applyMultiplier = () => {
                 const multi = parseFloat(multiplier.value);
                 if (isNaN(multi) || multi < 0) return alert('请输入有效的正数倍数！');
@@ -341,9 +355,7 @@
                     if (val > 0) item.rawInput = String(Math.round(val * multi));
                 });
             };
-            const clearAll = () => {
-                if (confirm('确定要清空所有数据吗？')) initializeItems();
-            };
+            const clearAll = () => { if (confirm('确定要清空所有数据吗？')) initializeItems(); };
             const exportData = () => {
                 const data = JSON.stringify(items.value.map(i => ({ id: i.id, rawInput: i.rawInput, adjustInput: i.adjustInput })), null, 2);
                 const blob = new Blob([data], { type: 'application/json' });
@@ -370,7 +382,7 @@
                 reader.readAsText(file);
                 event.target.value = '';
             };
-            
+            
             const saveData = () => localStorage.setItem('bettingToolData_v3', JSON.stringify(items.value));
             const loadData = () => {
                 const saved = localStorage.getItem('bettingToolData_v3');
@@ -378,21 +390,21 @@
                     try {
                         const parsed = JSON.parse(saved);
                         if (Array.isArray(parsed) && parsed.length === 49) {
-                            items.value = parsed;
-                            return;
+                            items.value = parsed; return;
                         }
-                    } catch { /* 忽略损坏的数据 */ }
+                    } catch {}
                 }
                 initializeItems();
             };
-            
+            
             watch(items, saveData, { deep: true });
             onMounted(loadData);
 
             return {
-                items: itemsWithProfitLoss, top20Items, originalRanking, adjustedRanking, getProfitLossClass,
+                items: items.value, // 模板中直接绑定原始数据
+                itemsWithProfitLoss, top20Items, originalRanking, adjustedRanking, getProfitLossClass,
                 validateInput, calculateAndDisplayResult, parseExpression, calculateAdjustedValue,
-                multiplier, applyMultiplier, exportData, importFromFile, clearAll,
+                multiplier, applyMultiplier, exportData, importFromFile, clearAll, fillRandomValues,
                 originalTotalSum, adjustedTotalSum, adjustmentTotalSum,
             };
         }
