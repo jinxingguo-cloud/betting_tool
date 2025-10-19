@@ -3,358 +3,413 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>投注分析工具 Pro (V3.3)</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <title>优化版投注应用</title>
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/path/to/logoA-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/path/to/logoA-16.png">
+    <link rel="shortcut icon" href="/path/to/logoA.ico">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/path/to/logoA-180.png">
+
+    <link rel="manifest" href="/manifest.json">
     <style>
-        :root {
-            --bg-color: #f0f2f5;
-            --card-bg-color: #ffffff;
-            --text-color: #1d2129;
-            --secondary-text-color: #606770;
-            --border-color: #e2e8f0;
-            --primary-color: #007aff;
-            --profit-color: #007aff;
-            --loss-color: #ff3b30;
-            --neutral-color: #1d2129;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
+        /* --- 通用样式 --- */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             margin: 0;
-            padding: 16px;
+            padding: 0;
+            background-color: #f4f7f6;
         }
-        #app {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 15px;
         }
-        .header { display: flex; align-items: center; gap: 12px; padding: 0 10px; }
-        .logo { width: 40px; height: 40px; }
-        .app-title { font-size: 24px; font-weight: 600; }
-        .card {
-            background-color: var(--card-bg-color);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
         }
-        h2 {
-            font-size: 20px; font-weight: 600; color: var(--text-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 12px; margin: 0 0 16px 0;
+        button {
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
         }
-        .top-actions-card { display: flex; flex-direction: column; gap: 20px; }
-        .actions-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-        
-        /* [UI升级] 倍数选择器 */
-        .multiplier-group { display: flex; align-items: center; gap: 10px; flex-grow: 1; min-width: 250px; }
-        .multiplier-group input[type="number"] {
-            width: 60px; padding: 8px; border: 1px solid var(--border-color);
-            border-radius: 8px; text-align: center; font-size: 16px; font-weight: 500;
+        button:hover {
+            background-color: #0056b3;
         }
-        .multiplier-group input[type="range"] { flex-grow: 1; accent-color: var(--primary-color); }
 
-        .actions-bar button, .actions-bar .file-label {
-            display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
-            border: none; border-radius: 8px; background-color: var(--primary-color);
-            color: white; font-size: 15px; font-weight: 500; cursor: pointer;
-            transition: transform 0.1s, background-color 0.2s;
+        /* --- 任务 5: 顶部 Logo --- */
+        header {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: white;
+            border-bottom: 1px solid #ddd;
         }
-        .actions-bar button:hover { background-color: #0056b3; transform: scale(1.02); }
-        .actions-bar button.secondary { background-color: var(--secondary-text-color); }
-        .actions-bar button.secondary:hover { background-color: #4a4f55; }
-        #import-file { display: none; }
-
-        .summary-bar {
-            display: flex; justify-content: space-around; flex-wrap: wrap;
-            background-color: #f8f9fa; border-radius: 8px; padding: 12px; gap: 15px;
+        header img {
+            height: 40px; /* Logo 高度 */
+            margin-right: 15px;
         }
-        .summary-item { text-align: center; }
-        .summary-item .label { font-size: 14px; color: var(--secondary-text-color); margin-bottom: 4px; }
-        .summary-item .value { font-size: 20px; font-weight: 600; color: var(--primary-color); }
+        header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
 
+        /* --- 任务 1: 投注区 (5列布局) --- */
         .betting-area {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
         }
-        .bet-item {
-            display: flex; flex-direction: column; align-items: center; text-align: center;
-            background-color: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);
+        .betting-column {
+            flex: 1; /* 5列平分 */
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        .bet-item .number-id { font-weight: bold; font-size: 1.1em; margin-bottom: 8px; color: var(--primary-color); }
-        .bet-item input {
-            width: 90%; text-align: center; background-color: white; color: var(--text-color);
-            border: 1px solid var(--border-color); border-radius: 6px; padding: 6px; font-size: 1em;
+        .betting-item {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px;
+            background-color: #fdfdfd;
         }
-        /* [UI升级] 算式结果显示区 */
-        .calculated-value {
-            font-size: 0.8em; color: var(--secondary-text-color); min-height: 1.2em;
-            margin: 4px 0; font-weight: bold;
+        /* 任务 1: 选项编号字体改为黑色 */
+        .betting-item .number {
+            font-weight: bold;
+            color: #000000; /* 黑色字体 */
+            min-width: 25px;
         }
-        .profit-loss { font-size: 0.9em; font-weight: 600; }
-        .profit { color: var(--profit-color); }
-        .loss { color: var(--loss-color); }
-        .neutral { color: var(--neutral-color); }
-        .adjustment-area { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
-        .adjust-item { background-color: #f8f9fa; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; font-size: 0.9em; text-align: center; }
-        .adjust-item .number-id { font-size: 1.2em; font-weight: bold; color: var(--profit-color); }
-        .adjust-item input { width: 85%; margin-top: 4px; text-align: center; border-radius: 4px; border: 1px solid var(--border-color); }
-        .ranking-container { display: flex; gap: 20px; flex-wrap: wrap; }
-        .ranking-area { flex: 1; min-width: 280px; }
-        .ranking-list { list-style-type: none; padding: 0; max-height: 400px; overflow-y: auto; }
-        .ranking-list li { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid var(--bg-color); border-radius: 4px; }
-        .ranking-list li:nth-child(odd) { background-color: #f8f9fa; }
-        .ranking-list .rank-id { font-weight: bold; }
-        .ranking-list .rank-value { color: var(--secondary-text-color); }
-        .ranking-list .rank-count { font-size: 0.8em; color: var(--primary-color); margin-left: 5px; font-weight: bold; }
-        
-        @media (max-width: 768px) {
-            body { padding: 8px; }
-            .header { padding: 0; justify-content: center; } .app-title { font-size: 20px; }
-            .logo { width: 32px; height: 32px; }
-            .actions-bar { flex-direction: column; align-items: stretch; }
-            .multiplier-group { justify-content: space-between; }
-            .summary-bar { justify-content: space-between; } .summary-item { flex-basis: 45%; }
-            .ranking-container { flex-direction: column; }
-            .betting-area { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+        .betting-item .details {
+            font-size: 0.9rem;
+            margin-left: 8px;
+            color: #555;
+        }
+
+        /* --- 模拟的功能区/输入区 --- */
+        .function-area {
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .function-area input {
+            width: 80px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+
+        /* --- 任务 4: 汇总统计区 --- */
+        .summary-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            padding: 15px;
+            background-color: #e6f7ff; /* 醒目背景色 */
+            border: 1px solid #b3e0ff;
+            border-radius: 8px;
+            margin-top: 20px; /* 在功能区下方 */
+        }
+        .summary-item {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        /* Emojis for clarity */
+        .summary-item .emoji { margin-right: 8px; }
+        .summary-item #summary-profit-count { color: #007bff; } /* 蓝色 */
+        .summary-item #summary-loss-count { color: #dc3545; } /* 红色 */
+        .summary-item #summary-total { font-weight: bold; }
+        .summary-item input { width: 80px; padding: 5px; }
+
+        /* --- 任务 2 & 3: 控制区 (隐藏按键 / 排序) --- */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .controls .sort-select label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .controls .sort-select select {
+            padding: 5px;
+            font-size: 14px;
+        }
+
+        /* --- 任务 2: 实时排列区 --- */
+        .realtime-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            transition: all 0.3s ease; /* 隐藏/显示的过渡 */
+        }
+        /* 隐藏状态 */
+        .realtime-area.hidden {
+            display: none;
+            /* 也可以用 opacity 和 height 实现动画 */
+            /* opacity: 0;
+            max-height: 0;
+            padding: 0;
+            margin: 0;
+            overflow: hidden; */
+        }
+        .realtime-item {
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .realtime-item .pl-value {
+            font-weight: bold;
+        }
+        .realtime-item .pl-value.profit {
+            color: #007bff; /* 盈: 蓝色 */
+        }
+        .realtime-item .pl-value.loss {
+            color: #dc3545; /* 亏: 红色 */
         }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <header class="header">
-        <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="48" fill="none" stroke="var(--primary-color)" stroke-width="4"/><rect x="25" y="50" width="15" height="25" rx="4" fill="var(--primary-color)"/><rect x="45" y="35" width="15" height="40" rx="4" fill="var(--primary-color)"/><rect x="65" y="25" width="15" height="50" rx="4" fill="var(--primary-color)"/></svg>
-        <h1 class="app-title">投注分析工具 Pro</h1>
+    <header>
+        <img src="/path/to/logoA-180.png" alt="Logo A">
+        <h1>应用标题</h1>
     </header>
 
-    <div class="card top-actions-card">
-        <div class="actions-bar">
-            <div class="multiplier-group">
-                <input type="range" v-model.number="multiplier" min="1" max="100" step="1">
-                <input type="number" v-model.number="multiplier" min="1">
-            </div>
-            <button @click="fillRandomValues" class="secondary">🎲 随机填值</button>
-            <button @click="exportData">📤 导出备份</button>
-            <label for="import-file" class="file-label">📥 导入恢复</label>
-            <input type="file" id="import-file" @change="importFromFile" accept=".json">
-            <button class="secondary" @click="clearAll">🗑️ 清空所有</button>
-        </div>
-        <div class="summary-bar">
-            <div class="summary-item"><div class="label">调节前总和</div><div class="value">{{ originalTotalSum.toLocaleString() }}</div></div>
-            <div class="summary-item"><div class="label">调节值总和</div><div class="value">{{ adjustmentTotalSum.toLocaleString() }}</div></div>
-            <div class="summary-item"><div class="label">调节后总和</div><div class="value">{{ adjustedTotalSum.toLocaleString() }}</div></div>
-        </div>
-    </div>
+    <div class="container">
 
-    <div class="card">
-        <h2>投注区</h2>
+        <div class="section-title">投注区</div>
         <div class="betting-area">
-            <div class="bet-item" v-for="item in items" :key="item.id">
-                <span class="number-id">{{ item.id }}</span>
-                <input type="text" v-model="item.rawInput" placeholder="金额/算式">
-                <div class="calculated-value">
-                    <span v-if="item.rawInput.trim() !== ''">= {{ parseExpression(item.rawInput) }}</span>
-                </div>
-                <span class="profit-loss" :class="getProfitLossClass(profitLossMap[item.id] || 0)">
-                    {{ (profitLossMap[item.id] || 0).toFixed(0) }}
-                </span>
+            <div class="betting-column">
+                <div class="betting-item"><span class="number">1</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">2</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">3</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">4</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">5</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">6</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">7</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">8</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">9</span><span class="details">详情...</span></div>
+            </div>
+            <div class="betting-column">
+                <div class="betting-item"><span class="number">10</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">11</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">19</span><span class="details">详情...</span></div>
+            </div>
+            <div class="betting-column">
+                <div class="betting-item"><span class="number">20</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">21</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">29</span><span class="details">详情...</span></div>
+            </div>
+            <div class="betting-column">
+                <div class="betting-item"><span class="number">30</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">31</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">39</span><span class="details">详情...</span></div>
+            </div>
+            <div class="betting-column">
+                <div class="betting-item"><span class="number">40</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">41</span><span class="details">详情...</span></div>
+                <div class="betting-item"><span class="number">49</span><span class="details">详情...</span></div>
             </div>
         </div>
-    </div>
 
-    <div class="card">
-        <h2>调节区 (自动选取数值最大的前20项)</h2>
-        <div class="adjustment-area">
-            <div class="adjust-item" v-for="item in top20Items" :key="item.id">
-                <span class="number-id">{{ item.id }}</span>
-                <span>原: {{ parseExpression(item.rawInput) }}</span>
-                <input type="text" v-model="item.adjustInput" placeholder="调节">
-                <span>后: {{ calculateAdjustedValue(item) }}</span>
+        <div class="section-title">功能区 / 输入与调节区</div>
+        <div class="function-area" id="input-area">
+            <label>项目A投注:</label>
+            <input type="number" class="data-input" value="100">
+            <label>项目B投注:</label>
+            <input type="number" class="data-input" value="50">
+            <label>项目C投注:</label>
+            <input type="number" class="data-input" value="0">
+        </div>
+
+        <div class="summary-area">
+            <div class="summary-item">
+                <span class="emoji">🧮</span>
+                总和: <span id="summary-total">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="emoji">🔵</span>
+                盈几项: <span id="summary-profit-count">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="emoji">🔴</span>
+                亏几项: <span id="summary-loss-count">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="emoji">⚙️</span>
+                <label for="adjust-total">调节总和:</label>
+                <input type="number" id="adjust-total" class="data-input" value="0">
             </div>
         </div>
-    </div>
 
-    <div class="card ranking-container">
-        <div class="ranking-area">
-            <h3>原始排序 (大→小)</h3>
-            <ul class="ranking-list">
-                <li v-for="item in originalRanking" :key="item.id">
-                    <div><span class="rank-id">No.{{ item.id }}</span><span class="rank-count" v-if="item.count > 1">(x{{ item.count }})</span></div>
-                    <span class="rank-value">{{ item.originalValue }}</span>
-                    <span :class="getProfitLossClass(item.originalProfitLoss)">{{ item.originalProfitLoss.toFixed(0) }}</span>
-                </li>
-            </ul>
+
+        <div class="controls">
+            <button id="toggle-realtime-btn">隐藏排列区</button>
+
+            <div class="sort-select">
+                <label for="sort-options">排列设置:</label>
+                <select id="sort-options">
+                    <option value="default">默认排列</option>
+                    <option value="pl-desc">按盈亏值排列 (高到低)</option>
+                    <option value="pl-asc">按盈亏值排列 (低到高)</option>
+                </select>
+            </div>
         </div>
-        <div class="ranking-area">
-            <h3>调节后排序 (大→小)</h3>
-            <ul class="ranking-list">
-                <li v-for="item in adjustedRanking" :key="item.id">
-                     <div><span class="rank-id">No.{{ item.id }}</span><span class="rank-count" v-if="item.count > 1">(x{{ item.count }})</span></div>
-                    <span class="rank-value">{{ item.finalValue }}</span>
-                    <span :class="getProfitLossClass(item.profitLoss)">{{ item.profitLoss.toFixed(0) }}</span>
-                </li>
-            </ul>
+        
+        <div class="realtime-area" id="realtime-area">
+            <div class="realtime-item" data-index="1" data-pl="150">
+                项目 1 (盈亏: <span class="pl-value profit">+150</span>)
+            </div>
+            <div class="realtime-item" data-index="2" data-pl="-50">
+                项目 2 (盈亏: <span class="pl-value loss">-50</span>)
+            </div>
+            <div class="realtime-item" data-index="3" data-pl="30">
+                项目 3 (盈亏: <span class="pl-value profit">+30</span>)
+            </div>
+            <div class="realtime-item" data-index="4" data-pl="0">
+                项目 4 (盈亏: <span class="pl-value">0</span>)
+            </div>
+            <div class="realtime-item" data-index="5" data-pl="-120">
+                项目 5 (盈亏: <span class="pl-value loss">-120</span>)
+            </div>
         </div>
-    </div>
-</div>
 
-<script>
-    const { createApp, ref, computed, watch, onMounted } = Vue;
+    </div> <script>
+    document.addEventListener('DOMContentLoaded', () => {
 
-    createApp({
-        setup() {
-            const items = ref([]);
-            const multiplier = ref(45); // [核心修改] 倍数默认值为45
+        // --- 任务 2: 隐藏/显示 实时排列区 ---
+        const toggleBtn = document.getElementById('toggle-realtime-btn');
+        const realtimeArea = document.getElementById('realtime-area');
 
-            const initializeItems = () => {
-                items.value = Array.from({ length: 49 }, (_, i) => ({ id: i + 1, rawInput: '', adjustInput: '' }));
-            };
+        toggleBtn.addEventListener('click', () => {
+            realtimeArea.classList.toggle('hidden');
+            // 更新按键文本
+            if (realtimeArea.classList.contains('hidden')) {
+                toggleBtn.textContent = '显示排列区';
+            } else {
+                toggleBtn.textContent = '隐藏排列区';
+            }
+        });
+
+
+        // --- 任务 3: 按盈亏值排列 ---
+        const sortSelect = document.getElementById('sort-options');
+        const itemsContainer = document.getElementById('realtime-area');
+
+        sortSelect.addEventListener('change', () => {
+            // 1. 获取所有子项
+            //    使用 [].slice.call 将 NodeList 转换为真实数组
+            const items = [].slice.call(document.querySelectorAll('.realtime-item'));
             
-            const parseExpression = (expression) => {
-                if (typeof expression !== 'string' || expression.trim() === '') return 0;
-                try {
-                    const sanitized = String(expression).replace(/[^0-9+\-*/().]/g, '');
-                    if (!sanitized) return 0;
-                    const result = new Function('return ' + sanitized)();
-                    return isFinite(result) ? Math.max(0, Math.floor(result)) : 0;
-                } catch { return 0; }
-            };
+            const sortType = sortSelect.value;
 
-            const processedItems = computed(() => items.value.map(item => ({
-                ...item,
-                originalValue: parseExpression(item.rawInput),
-                adjustValue: parseExpression(item.adjustInput),
-                finalValue: Math.max(0, parseExpression(item.rawInput) - parseExpression(item.adjustInput)),
-            })));
-            
-            // [核心修改] 盈亏计算逻辑更新，直接使用倍数作为因子
-            const itemsWithProfitLoss = computed(() => {
-                if (!items.value || items.value.length === 0) return [];
-                const calculationFactor = parseFloat(multiplier.value) || 1;
-                const adjustedTotal = processedItems.value.reduce((s, i) => s + i.finalValue, 0);
-                const originalTotal = processedItems.value.reduce((s, i) => s + i.originalValue, 0);
+            // 2. 排序
+            items.sort((a, b) => {
+                const plA = parseFloat(a.dataset.pl);
+                const plB = parseFloat(b.dataset.pl);
+                const indexA = parseInt(a.dataset.index);
+                const indexB = parseInt(b.dataset.index);
 
-                return processedItems.value.map(item => ({
-                    ...item,
-                    profitLoss: adjustedTotal - (item.finalValue * calculationFactor),
-                    originalProfitLoss: originalTotal - (item.originalValue * calculationFactor)
-                }));
-            });
-            
-            // [性能优化] 创建一个盈亏Map，方便在模板中快速查找
-            const profitLossMap = computed(() => {
-                const map = {};
-                itemsWithProfitLoss.value.forEach(item => {
-                    map[item.id] = item.profitLoss;
-                });
-                return map;
-            });
-
-            const top20Items = computed(() => {
-                const sortedIds = processedItems.value.filter(p => p.originalValue > 0).sort((a, b) => b.originalValue - a.originalValue).slice(0, 20).map(p => p.id);
-                return items.value.filter(item => sortedIds.includes(item.id)).sort((a, b) => parseExpression(b.rawInput) - parseExpression(a.rawInput));
-            });
-
-            const generateRanking = (source, valueKey, profitLossKey) => {
-                if (!source) return [];
-                const map = new Map();
-                source.forEach(item => {
-                    const value = item[valueKey];
-                    if (value > 0) {
-                        if (!map.has(value)) map.set(value, []);
-                        map.get(value).push(item);
-                    }
-                });
-                const list = [];
-                [...map.keys()].sort((a, b) => b - a).forEach(value => {
-                    const itemsAtRank = map.get(value);
-                    itemsAtRank.forEach(item => list.push({ id: item.id, [valueKey]: value, [profitLossKey]: item[profitLossKey], count: itemsAtRank.length }));
-                });
-                return list;
-            };
-
-            const originalRanking = computed(() => generateRanking(itemsWithProfitLoss.value, 'originalValue', 'originalProfitLoss'));
-            const adjustedRanking = computed(() => generateRanking(itemsWithProfitLoss.value, 'finalValue', 'profitLoss'));
-            
-            const originalTotalSum = computed(() => processedItems.value.reduce((s, i) => s + i.originalValue, 0));
-            const adjustedTotalSum = computed(() => processedItems.value.reduce((s, i) => s + i.finalValue, 0));
-            const adjustmentTotalSum = computed(() => processedItems.value.reduce((s, i) => s + i.adjustValue, 0));
-
-            const calculateAdjustedValue = (item) => Math.max(0, parseExpression(item.rawInput) - parseExpression(item.adjustInput));
-            const getProfitLossClass = (value) => { if (value > 0) return 'profit'; if (value < 0) return 'loss'; return 'neutral'; };
-
-            const fillRandomValues = () => {
-                if (!confirm('这将覆盖所有投注区现有数值，确定吗？')) return;
-                items.value.forEach(item => {
-                    item.rawInput = String(Math.floor(Math.random() * 1000) + 1);
-                    item.adjustInput = '';
-                });
-            };
-            const clearAll = () => { if (confirm('确定要清空所有数据吗？')) initializeItems(); };
-            const exportData = () => {
-                const dataToSave = { items: items.value, multiplier: multiplier.value };
-                const dataStr = JSON.stringify(dataToSave, null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `betting_backup_${new Date().toISOString().slice(0, 10)}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-            };
-            const importFromFile = (event) => {
-                const file = event.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = e => {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        if (data.items && Array.isArray(data.items) && data.items.length === 49) {
-                            items.value = data.items;
-                            multiplier.value = data.multiplier || 45;
-                            alert('数据恢复成功！');
-                        } else alert('导入失败：文件格式不正确。');
-                    } catch { alert('导入失败：无法解析文件。'); }
-                };
-                reader.readAsText(file); event.target.value = '';
-            };
-            
-            // [核心修改] 自动保存功能
-            const saveData = () => {
-                const state = { items: items.value, multiplier: multiplier.value };
-                localStorage.setItem('bettingToolData_v3_3', JSON.stringify(state));
-            };
-            const loadData = () => {
-                const saved = localStorage.getItem('bettingToolData_v3_3');
-                if (saved) {
-                    try {
-                        const state = JSON.parse(saved);
-                        if (state.items && Array.isArray(state.items) && state.items.length === 49) {
-                            items.value = state.items;
-                            multiplier.value = state.multiplier || 45;
-                            return;
-                        }
-                    } catch {}
+                switch (sortType) {
+                    case 'pl-desc': // 盈亏高到低
+                        return plB - plA;
+                    case 'pl-asc': // 盈亏低到高
+                        return plA - plB;
+                    case 'default': // 默认 (按 data-index)
+                    default:
+                        return indexA - indexB;
                 }
-                initializeItems();
-            };
+            });
+
+            // 3. 重新插入DOM
+            items.forEach(item => {
+                itemsContainer.appendChild(item);
+            });
+        });
+
+
+        // --- 任务 4: 汇总区自动更新 ---
+        const summaryTotalEl = document.getElementById('summary-total');
+        const summaryProfitEl = document.getElementById('summary-profit-count');
+        const summaryLossEl = document.getElementById('summary-loss-count');
+        const adjustTotalInput = document.getElementById('adjust-total');
+
+        // 绑定所有触发更新的输入框 (来自 "输入与调节区" 和 "汇总区" 自己)
+        const inputs = document.querySelectorAll('.data-input');
+
+        function updateSummary() {
+            // 在实际应用中, 这里的逻辑会很复杂
+            // 这里我们用模拟数据来演示
             
-            watch(items, saveData, { deep: true });
-            watch(multiplier, saveData);
-            onMounted(loadData);
+            // 1. 从 "实时排列区" 的模拟数据中获取盈亏值
+            const realtimeItems = document.querySelectorAll('.realtime-item');
+            let calculatedTotal = 0;
+            let profitCount = 0;
+            let lossCount = 0;
 
-            return {
-                items, multiplier, top20Items, profitLossMap,
-                originalRanking, adjustedRanking, originalTotalSum, adjustedTotalSum, adjustmentTotalSum,
-                parseExpression, calculateAdjustedValue, getProfitLossClass,
-                fillRandomValues, clearAll, exportData, importFromFile,
-            };
+            realtimeItems.forEach(item => {
+                const pl = parseFloat(item.dataset.pl) || 0;
+                if (pl > 0) {
+                    profitCount++;
+                } else if (pl < 0) {
+                    lossCount++;
+                }
+                // (注意: 这里的 total 应该基于您的 "输入与调节区" 
+                // 和 "实时排列区" 的数据动态计算。为演示, 我们先用实时区的 P/L)
+                calculatedTotal += pl; 
+            });
+
+            // 2. (演示) 让 "输入与调节区" 的值影响总和
+            // 假设 "输入与调节区" 的值是总成本
+            let inputCost = 0;
+            document.querySelectorAll('#input-area .data-input').forEach(input => {
+                inputCost += parseFloat(input.value) || 0;
+            });
+            // 假设总和 = (计算出的盈亏) - (输入成本)
+            // 这是一个非常简化的模拟!
+            // let baseTotal = calculatedTotal - inputCost; 
+            // (我们暂时只用实时排列区的总和, 避免逻辑混乱)
+            let baseTotal = calculatedTotal;
+
+
+            // 3. 获取 "调节总和" 的值
+            const adjustment = parseFloat(adjustTotalInput.value) || 0;
+
+            // 4. 更新汇总区的显示
+            summaryTotalEl.textContent = (baseTotal + adjustment).toFixed(2);
+            summaryProfitEl.textContent = profitCount;
+            summaryLossEl.textContent = lossCount;
         }
-    }).mount('#app');
-</script>
 
+        // 5. 为所有相关输入框添加 "input" 事件监听
+        inputs.forEach(input => {
+            input.addEventListener('input', updateSummary);
+        });
+
+        // 页面加载时立即执行一次
+        updateSummary();
+
+    });
+    </script>
 </body>
 </html>
