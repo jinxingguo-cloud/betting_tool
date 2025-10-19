@@ -1,6 +1,6 @@
 {
-  "name": "您的应用全名",
-  "short_name": "应用短名称",
+  "name": "投注自动分析pro",
+  "short_name": "投注自动分析pro",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
